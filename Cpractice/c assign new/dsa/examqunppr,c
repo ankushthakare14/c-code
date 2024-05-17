@@ -1,0 +1,420 @@
+
+/*
+ ============================================================================
+ Name        : 0020_Exam_Q1.c
+ Author      : Suraj_Jadhav
+ Version     :
+ Copyright   : copyright notice
+ Description :
+ ============================================================================
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+/*private defines*/
+#define MAX_NAME_LENGTH 20
+#define MAX_ADDRESS_LENGTH 50
+
+
+/*structures declarations*/
+typedef struct STUDENT_INFO{
+	char name[MAX_NAME_LENGTH];
+	int Roll_no;
+	int age;
+	char address[MAX_ADDRESS_LENGTH];
+}STUDENT_INFO_t;
+
+typedef struct DLL_NODE{
+	struct STUDENT_INFO data;
+	struct DLL_NODE *next;
+	struct DLL_NODE *prev;
+}DLL_NODE_t;
+
+/*structures declarations ends here*/
+
+
+typedef struct STD_LIST{
+	struct DLL_NODE *head;
+	int count;
+}STD_LIST_t;
+
+
+/*function declarations */
+
+void add_new(STD_LIST_t*);
+void modify_std(STD_LIST_t*);
+void delete_std(STD_LIST_t*);
+void display_all(STD_LIST_t);
+void display_single(DLL_NODE_t*);
+
+//function which search student and returns its address
+DLL_NODE_t* search_std(STD_LIST_t,int);
+//function which create node and return it's address
+DLL_NODE_t*get_node();
+//to remove warnings
+void __fpurge(FILE*);
+
+/*function declarations end here */
+
+
+
+int main(void) {
+	int choice,val;
+
+	//create list and init head with NULL
+	STD_LIST_t list_1;
+	list_1.head=NULL;
+	list_1.count=0;
+
+	while(1)
+	{
+		printf("===========Welcome To Student Portal===========\n");
+		printf("Number of students present = %d\n",list_1.count);
+		printf("1 - Add New student\n");
+		printf("2 - Search student\n");
+		printf("3 - Modify student\n");
+		printf("4 - Show All student\n");
+		printf("5 - Delete student\n");
+		printf("6 - Exit\n");
+
+		printf("Enter your choice : ");
+		__fpurge(stdin);
+		scanf("%d",&choice);
+
+		switch(choice)
+		{
+		case 1:
+				add_new(&list_1);
+				break;
+		case 2:
+				printf("Enter student roll number to search : ");
+				scanf("%d",&val);
+
+				search_std(list_1,val);
+				break;
+		case 3:
+				modify_std(&list_1);
+				break;
+		case 4:
+				display_all(list_1);
+				break;
+		case 5:
+				delete_std(&list_1);
+				break;
+		case 6:
+				exit(0);
+		default:
+			printf("Enter valid option !!!!\n");
+			break;
+		}
+	}
+
+
+	return EXIT_SUCCESS;
+}/*main() end here*/
+
+
+
+DLL_NODE_t*get_node()
+{
+	//Allocate memory to node
+	DLL_NODE_t*temp=(DLL_NODE_t*)malloc(sizeof(DLL_NODE_t));
+
+	temp->next=NULL;
+	temp->prev=NULL;
+
+	printf("Enter Student name : ");
+	__fpurge(stdin);
+	scanf("%s",temp->data.name);
+
+	printf("Enter Student roll number : ");
+	__fpurge(stdin);
+	scanf("%d",&temp->data.Roll_no);
+
+	printf("Enter Student age : ");
+	__fpurge(stdin);
+	scanf("%d",&temp->data.age);
+
+	printf("Enter Student Address : ");
+	__fpurge(stdin);
+	scanf("%s",temp->data.address);
+
+	return temp;
+
+}/*get_node() end here */
+
+void add_new(STD_LIST_t*list_ptr)
+{
+	//creatated temporary head
+	DLL_NODE_t*temp_head = list_ptr->head;
+
+	//create new node
+	DLL_NODE_t*new_node=get_node();
+
+	if(temp_head == NULL)
+	{
+		//assign to head
+		list_ptr->head=new_node;
+		//increment count
+		list_ptr->count++;
+
+	}
+	else
+	{
+		if(new_node->data.Roll_no < temp_head->data.Roll_no )
+		{
+			/*this is to enter at beginning if the new node is small*/
+			//enter new node at beg
+			new_node->next=temp_head;
+			temp_head->prev=new_node;
+
+			//update head
+			list_ptr->head=new_node;
+			//update count
+			list_ptr->count++;
+		}
+		else
+		{
+			/*if new node is bigger that first*/
+
+			while( (new_node->data.Roll_no >= temp_head->data.Roll_no) && (temp_head->next!=NULL) )
+			{
+				temp_head=temp_head->next;
+			}/*while ends here*/
+
+			/*condition for duplicate*/
+			if(new_node->data.Roll_no == temp_head->data.Roll_no)
+			{
+				printf("Duplicate found !!!!!try again!!!\n");
+				free(new_node);
+				return;
+			}
+
+			if(temp_head->prev == NULL)
+			{
+				/*if only one node is present*/
+				temp_head->next=new_node;
+				new_node->prev=temp_head;
+				//update count
+				list_ptr->count++;
+			}
+			else if(temp_head->next == NULL)
+			{
+				/*For last node*/
+				if(new_node->data.Roll_no > temp_head->data.Roll_no)
+				{
+					//enter at last
+					temp_head->next=new_node;
+					new_node->prev=temp_head;
+					//update count
+					list_ptr->count++;
+				}
+				else if(new_node->data.Roll_no < temp_head->data.Roll_no)
+				{
+					/*enter before last*/
+					new_node->next=temp_head;
+					new_node->prev=temp_head->prev;
+					
+					temp_head->prev->next=new_node;
+					temp_head->prev=new_node;
+					
+					//update count
+					list_ptr->count++;
+
+				}
+			}
+			else
+			{
+				/*for enter new node i middle*/
+				//clone new node's next and prev
+				new_node->next=temp_head;
+				new_node->prev=temp_head->prev;
+				//change curr pointer
+				temp_head->prev->next=new_node;
+				temp_head->prev=new_node;
+				//update count
+				list_ptr->count++;
+
+			}
+		}
+
+	}
+
+}/*add_new() end here*/
+
+
+/*function which search student and returns its nodes address*/
+DLL_NODE_t* search_std(STD_LIST_t list,int id)
+{
+
+	DLL_NODE_t*temp_head=list.head;
+
+	while(id != temp_head->data.Roll_no && temp_head->next != NULL)
+	{
+		temp_head = temp_head->next;
+	}
+	if(temp_head->next == NULL && temp_head->data.Roll_no == id)
+	{
+		printf("======FOUND=======\n");
+		printf("Student with Roll number %d \n",id);
+		display_single(temp_head);
+		return temp_head;
+
+	}
+	else if(temp_head->next == NULL && temp_head->data.Roll_no != id)
+	{
+		printf("Student with Roll number %d  NOT FOUND\n",id);
+		return NULL;
+	}
+	else if(id==temp_head->data.Roll_no)
+	{
+		printf("======FOUND=======\n");
+		printf("Student with Roll number %d \n",id);
+		display_single(temp_head);
+		return temp_head;
+
+	}
+
+}/*search_std() end here*/
+
+
+void modify_std(STD_LIST_t*list)
+{
+	int id;
+
+	printf("-----------------------------------------\n");
+	printf("Enter roll number to modify : ");
+	scanf("%d",&id);
+
+	//search roll number to modify
+	DLL_NODE_t *temp_head=search_std(*list, id);
+
+	if(temp_head==NULL)
+	{
+		printf("NO Student fount to modify !!!\n");
+	}
+	else
+	{
+		printf("Enter NEW NAME of Student of id %d : ",id);
+		__fpurge(stdin);
+		scanf("%s",temp_head->data.name);
+
+		printf("Enter NEW AGE of Student id %d : ",id);
+		__fpurge(stdin);
+		scanf("%d",&temp_head->data.age);
+
+		printf("Enter NEW ADDRESS of Student id %d : ",id);
+		__fpurge(stdin);
+		scanf("%s",temp_head->data.address);
+
+	}
+
+}/*modify_std() end here*/
+
+
+void delete_std(STD_LIST_t*list)
+{
+	int id;
+	DLL_NODE_t*temp_head=list->head;
+
+	printf("enter roll number to delete : ");
+	scanf("%d",&id);
+
+	if(temp_head==NULL)
+	{
+		printf("Nothing to delete !!!\n");
+		return;
+	}
+	else
+	{
+		//find student
+		temp_head=search_std(*list, id);
+
+		if(temp_head==NULL)
+		{
+			printf("NO student found with id %d\n",id);
+			return;
+		}
+		//break and create link
+		if(temp_head->prev==NULL)
+		{
+			/*Found at first node*/
+			list->head=temp_head->next;
+			free(temp_head);
+			list->count--;
+		}
+		else if(temp_head->next==NULL && temp_head->prev==NULL)
+		{
+			/*only one node is present*/
+			list->head=NULL;
+			free(temp_head);
+			list->count--;
+		}
+		else
+		{
+			/*found in middle*/
+			temp_head->prev->next=temp_head->next;
+			free(temp_head);
+			list->count--;
+		}
+
+	}
+
+}/*delete_std() end here*/
+
+void display_all(STD_LIST_t list)
+{
+	if(list.head==NULL)
+	{
+		printf("NOTHING TO SHOW!!!!List is EMPTY!!!!\n");
+		return;
+	}
+	DLL_NODE_t*traversing_ptr=list.head;
+	while(traversing_ptr!=NULL)
+	{
+		display_single(traversing_ptr);
+		traversing_ptr=traversing_ptr->next;
+	}/*while ends here*/
+
+}/*display_all() end here*/
+
+
+void display_single(DLL_NODE_t *temp)
+{
+	printf("======================================\n");
+
+	printf("Student name : ");
+	printf("%s\n",temp->data.name);
+
+	printf("Student roll number : ");
+	printf("%d\n",temp->data.Roll_no);
+
+	printf("Student age : ");
+	printf("%d\n",temp->data.age);
+
+	printf("Student roll number : ");
+	printf("%s\n",temp->data.address);
+
+	printf("======================================\n");
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
